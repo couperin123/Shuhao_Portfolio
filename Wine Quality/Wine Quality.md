@@ -89,7 +89,7 @@ sns.heatmap(corrmat, vmax=.8, square=True)
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x14d73382848>
+    <matplotlib.axes._subplots.AxesSubplot at 0x1b7345f4c88>
 
 
 
@@ -233,7 +233,7 @@ grid_logreg = GridSearchCV(my_pipeline_logreg, param_grid)
 print(grid_logreg.best_params_)
 ```
 
-    Wall time: 12.2 s
+    Wall time: 11.3 s
     {'model__C': 40, 'model__penalty': 'l2'}
     
 
@@ -277,7 +277,7 @@ grid_sgd = GridSearchCV(my_pipeline_sgd, param_grid)
 print(grid_sgd.best_params_)
 ```
 
-    Wall time: 265 ms
+    Wall time: 212 ms
     {'model__alpha': 0.01}
     
 
@@ -323,7 +323,7 @@ grid_svc = GridSearchCV(my_pipeline_svc, param_grid)
 print(grid_svc.best_params_)
 ```
 
-    Wall time: 5.16 s
+    Wall time: 5.17 s
     {'model__C': 10, 'model__gamma': 1}
     
 
@@ -413,14 +413,12 @@ print(grid_rfst.best_params_)
     
 
     [Parallel(n_jobs=-1)]: Using backend LokyBackend with 8 concurrent workers.
-    [Parallel(n_jobs=-1)]: Done  25 tasks      | elapsed:    4.5s
+    [Parallel(n_jobs=-1)]: Done  25 tasks      | elapsed:    4.1s
+    [Parallel(n_jobs=-1)]: Done 150 out of 150 | elapsed:   11.0s finished
     
 
-    Wall time: 11.7 s
+    Wall time: 11.3 s
     {'model__max_leaf_nodes': 100, 'model__n_estimators': 60}
-    
-
-    [Parallel(n_jobs=-1)]: Done 150 out of 150 | elapsed:   11.4s finished
     
 
 Output each feature's importance from the best model:
