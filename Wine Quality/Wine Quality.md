@@ -89,7 +89,7 @@ sns.heatmap(corrmat, vmax=.8, square=True)
 
 
 
-    <matplotlib.axes._subplots.AxesSubplot at 0x1b7345f4c88>
+    <matplotlib.axes._subplots.AxesSubplot at 0x21590062588>
 
 
 
@@ -138,7 +138,7 @@ df_red['binary quality'] = np.where(df_red.quality < 6.5, 0, 1)
 
 
 ```python
-# count the number of GOOD/BAD wine
+# count the number of GOOD/NOT SO GOOD wine
 df_red['binary quality'].value_counts()
 ```
 
@@ -150,6 +150,8 @@ df_red['binary quality'].value_counts()
     Name: binary quality, dtype: int64
 
 
+
+In this dataset, there are 86.43\% of "Not so good" wine and 13.57\% of "Good wine".
 
 
 ```python
@@ -208,7 +210,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.svm import SVC, LinearSVC
 from sklearn.pipeline import Pipeline
-from sklearn.metrics import log_loss, accuracy_score, roc_curve, roc_auc_score, plot_roc_curve, precision_recall_curve
+from sklearn.metrics import log_loss, cohen_kappa_score, roc_curve, roc_auc_score, plot_roc_curve, precision_recall_curve
 from sklearn.model_selection import cross_val_score, cross_val_predict, GridSearchCV
 ```
 
@@ -233,7 +235,7 @@ grid_logreg = GridSearchCV(my_pipeline_logreg, param_grid)
 print(grid_logreg.best_params_)
 ```
 
-    Wall time: 11.3 s
+    Wall time: 11.8 s
     {'model__C': 40, 'model__penalty': 'l2'}
     
 
@@ -277,7 +279,7 @@ grid_sgd = GridSearchCV(my_pipeline_sgd, param_grid)
 print(grid_sgd.best_params_)
 ```
 
-    Wall time: 212 ms
+    Wall time: 336 ms
     {'model__alpha': 0.01}
     
 
@@ -323,7 +325,7 @@ grid_svc = GridSearchCV(my_pipeline_svc, param_grid)
 print(grid_svc.best_params_)
 ```
 
-    Wall time: 5.17 s
+    Wall time: 5.63 s
     {'model__C': 10, 'model__gamma': 1}
     
 
@@ -365,7 +367,7 @@ grid_dtc = GridSearchCV(my_pipeline_dtc, param_grid)
 print(grid_dtc.best_params_)
 ```
 
-    Wall time: 3.95 s
+    Wall time: 5.37 s
     {'model__max_leaf_nodes': 25}
     
 
@@ -413,11 +415,11 @@ print(grid_rfst.best_params_)
     
 
     [Parallel(n_jobs=-1)]: Using backend LokyBackend with 8 concurrent workers.
-    [Parallel(n_jobs=-1)]: Done  25 tasks      | elapsed:    4.1s
-    [Parallel(n_jobs=-1)]: Done 150 out of 150 | elapsed:   11.0s finished
+    [Parallel(n_jobs=-1)]: Done  25 tasks      | elapsed:    5.4s
+    [Parallel(n_jobs=-1)]: Done 150 out of 150 | elapsed:   12.8s finished
     
 
-    Wall time: 11.3 s
+    Wall time: 13.1 s
     {'model__max_leaf_nodes': 100, 'model__n_estimators': 60}
     
 
@@ -483,7 +485,7 @@ plt.show()
 ```
 
 
-![png](Wine%20Quality_files/Wine%20Quality_60_0.png)
+![png](Wine%20Quality_files/Wine%20Quality_61_0.png)
 
 
 ## Comparing ROC Curves across different models
@@ -504,7 +506,7 @@ plt.show()
 ```
 
 
-![png](Wine%20Quality_files/Wine%20Quality_62_0.png)
+![png](Wine%20Quality_files/Wine%20Quality_63_0.png)
 
 
 
@@ -586,7 +588,32 @@ voting_clf = VotingClassifier(
                 ('svc', grid_svc.best_estimator_),
                 ('rfst', grid_rfst.best_estimator_)],
     voting='hard')
+
+voting_clf.fit(X_train, y_train)
 ```
+
+
+
+
+    VotingClassifier(estimators=[('logreg',
+                                  Pipeline(steps=[('model',
+                                                   LogisticRegression(C=40,
+                                                                      max_iter=2000,
+                                                                      random_state=42))])),
+                                 ('svc',
+                                  Pipeline(steps=[('scaler', StandardScaler()),
+                                                  ('model',
+                                                   SVC(C=10, gamma=1,
+                                                       random_state=42))])),
+                                 ('rfst',
+                                  Pipeline(steps=[('model',
+                                                   RandomForestClassifier(max_leaf_nodes=100,
+                                                                          n_estimators=60,
+                                                                          random_state=42))]))])
+
+
+
+Calculate the Cohen's Kappa score $\kappa$ for each classifier, where a random classifier and a perfect classifier have Kappa score of 0 and 1, respectively. Accuracy score is less informative where classes are imbalanced, in this dataset if we have a naive classifier which predicts every wine as "not so good", we still have an accuracy of 86.43\%. In contrast, the Kappa score of this naive classifier is 0 (an extreme random classifer that classifies everything as negative).
 
 
 ```python
@@ -594,25 +621,25 @@ for clf in (grid_logreg.best_estimator_,
             grid_svc.best_estimator_,
             grid_rfst.best_estimator_,
             voting_clf):
-    clf.fit(X_train, y_train)
+    
     y_pred = clf.predict(X_test)
     
     if clf == voting_clf:
-        print(clf.__class__.__name__, accuracy_score(y_test, y_pred))
+        print(clf.__class__.__name__, cohen_kappa_score(y_test, y_pred))
     else:
-        print(clf.named_steps['model'].__class__.__name__, accuracy_score(y_test, y_pred))
+        print(clf.named_steps['model'].__class__.__name__, cohen_kappa_score(y_test, y_pred))
 ```
 
-    LogisticRegression 0.89375
-    SVC 0.921875
-    RandomForestClassifier 0.934375
-    VotingClassifier 0.9375
+    LogisticRegression 0.4316163410301953
+    SVC 0.5871180842279108
+    RandomForestClassifier 0.6766121270452359
+    VotingClassifier 0.6885038450306629
     
 
 ## Conclusion
 
-In this project, we used physicochemical properties of wine to build a wien quality predictor. Five different classifiers (Logistic Regression, SVM with radial basis function kernel, linear SVM, Decision Tree, and Random Forest) were tested, and the individual classifier built by Random Forest has the best performance. The performance can be further enhanced by creating a voting classifier among the best individual classifier (Random Forest, SVM, and Logistic Regression).
+In this project, we used physicochemical properties of wine to build a wien quality predictor. Five different classifiers (Logistic Regression, SVM with radial basis function kernel, linear SVM, Decision Tree, and Random Forest) were tested, and the individual classifier built by Random Forest has the best performance ($\kappa = 0.6766$). The performance can be further enhanced by creating a voting classifier ($\kappa = 0.6885$) among the best individual classifier (Random Forest, SVM, and Logistic Regression).
 
 ## Future Work
 
-It will be interesting to investigate whether boosting (like adaptive boosting and gradient boosting) and stacking ensemble methods can further imporve the performance.
+It will be interesting to investigate whether boosting (like adaptive boosting and gradient boosting) and stacking ensemble methods can further imporve the performance. Additionally, in this dataset the classes are imbalanced so it might worth trying some resampling techniques (oversampling and undersampling) as well. 
